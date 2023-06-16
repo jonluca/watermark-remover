@@ -10,6 +10,21 @@ This only works for text based watermarks that have been added to the pdf as tex
 
 # Getting Started
 
+You must have qpdf installed. You can install it with brew on macos:
+
+```
+brew install qpdf
+``
+```
+
+or with apt
+
+```bash
+sudo apt-get install qpdf
+```
+
+Then add this as a dependency
+
 ```
 yarn add watermark-remover
 ```

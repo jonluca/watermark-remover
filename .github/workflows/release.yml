@@ -16,6 +16,7 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: 18
+      - run: sudo apt-get install qpdf
       - run: yarn install --frozen-lockfile
       - run: yarn build
       - run: yarn test

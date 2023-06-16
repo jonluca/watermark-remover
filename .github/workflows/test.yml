@@ -25,6 +25,9 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: "yarn"
 
+      - name: Install qpdf
+        run: sudo apt-get install qpdf
+
       - name: Install dependencies
         run: yarn install --frozen-lockfile
 
