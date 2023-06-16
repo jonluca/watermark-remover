@@ -12,12 +12,26 @@ describe("Removes watermark", async () => {
   });
 
   test(`it removes the watermark from test pdf`, async ({ expect }) => {
-    await removeWatermark(resolve(join(__dirname, "pdfs/sample-text-watermark.pdf")), { watermark: "WATERMARK" });
+    await removeWatermark(resolve(join(__dirname, "pdfs/sample-text-watermark.pdf")), {
+      watermark: "Watermark",
+      outputFileName: "all-clean.pdf",
+    });
+    expect(true).toBe(true);
+  });
+
+  test(`it removes the watermark from test pdf with intelligent json only`, async ({ expect }) => {
+    await removeWatermark(resolve(join(__dirname, "pdfs/sample-text-watermark.pdf")), {
+      watermark: "Watermark",
+      outputFileName: "sample-text-intelligent-clean.pdf",
+      intelligentJson: true,
+      modifyJsonObjects: false,
+      binaryStringReplacement: false,
+    });
     expect(true).toBe(true);
   });
 
   test(`it removes the watermark from test pdf with image`, async ({ expect }) => {
-    await removeWatermark(resolve(join(__dirname, "pdfs/sample-image-watermark.pdf")), { watermark: "WATERMARK" });
+    await removeWatermark(resolve(join(__dirname, "pdfs/sample-image-watermark.pdf")), { watermark: "Watermark" });
     expect(true).toBe(true);
   });
 });
