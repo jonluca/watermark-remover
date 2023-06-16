@@ -2,6 +2,7 @@ import jetpack from "fs-jetpack";
 import { execa } from "execa";
 import { v4 as uuid } from "uuid";
 import * as path from "path";
+import { lookPath } from "find-bin";
 
 const cleanWatermarkFromFile = async (filePath: string, watermark: string) => {
   const content = await jetpack.readAsync(filePath, "utf8");
@@ -28,6 +29,11 @@ export const removeWatermark = async (inputFile: string, opts?: RemoveWatermarkO
   const resolved = path.resolve(inputFile);
   if (!jetpack.exists(resolved)) {
     throw new Error("File does not exist");
+  }
+
+  const qpdfBin = await lookPath("qpdf");
+  if (!qpdfBin) {
+    throw new Error("qpdf not found");
   }
 
   const dir = jetpack.tmpDir();

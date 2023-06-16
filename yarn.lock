@@ -1091,6 +1091,11 @@ fill-range@^7.0.1:
   dependencies:
     to-regex-range "^5.0.1"
 
+find-bin@^1.0.2:
+  version "1.0.2"
+  resolved "https://registry.npmjs.org/find-bin/-/find-bin-1.0.2.tgz#96f566040e29637f66005bae6129b292a05cdfb9"
+  integrity sha512-KapW1EsMK98Ih6/EKgIWqKQjhgDDGGhGK90kvui/z0zgXRCtS8vM/N1AczMitKTOc6o6N4CB73a46GnGvM9KrQ==
+
 find-up@^5.0.0:
   version "5.0.0"
   resolved "https://registry.npmjs.org/find-up/-/find-up-5.0.0.tgz#4c92819ecb7083561e4f4a240a86be5198f536fc"

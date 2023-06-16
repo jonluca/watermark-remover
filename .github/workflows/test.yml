@@ -26,7 +26,10 @@ jobs:
           cache: "yarn"
 
       - name: Install qpdf
-        run: sudo apt-get install qpdf
+        uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: qpdf
+          version: 1.0
 
       - name: Install dependencies
         run: yarn install --frozen-lockfile
