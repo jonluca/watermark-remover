@@ -1,0 +1,73 @@
+{
+  "name": "watermark-remover",
+  "version": "0.0.0-development",
+  "license": "MIT",
+  "type": "module",
+  "author": "Jonluca DeCaro <watermarkremover@jonlu.ca>",
+  "description": "Remove watermarks from a pdf",
+  "types": "dist/index.d.ts",
+  "files": [
+    "/dist"
+  ],
+  "sideEffects": false,
+  "main": "dist/index.js",
+  "keywords": [
+    "watermark",
+    "pdf",
+    "qpdf"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jonluca/watermark-remover.git"
+  },
+  "bugs": {
+    "url": "https://github.com/jonluca/watermark-remover/issues"
+  },
+  "homepage": "https://github.com/jonluca/watermark-remover",
+  "scripts": {
+    "prepublishOnly": "yarn build",
+    "lint": "eslint src",
+    "build": "rm -fr dist/* && tsc -p tsconfig.json",
+    "typecheck": "tsc --noEmit",
+    "prettier": "prettier --write \"**/*.+(js|jsx|ts|tsx|har||json|css|md)\"",
+    "test": "vitest"
+  },
+  "dependencies": {
+    "@types/uuid": "^9.0.2",
+    "execa": "^7.1.1",
+    "fs-jetpack": "^5.1.0",
+    "lodash": "^4.17.21",
+    "uuid": "^9.0.0"
+  },
+  "devDependencies": {
+    "@types/eslint": "8.40.2",
+    "@types/lodash": "^4.14.195",
+    "@types/node": "^20.3.1",
+    "@typescript-eslint/eslint-plugin": "^5.59.11",
+    "@typescript-eslint/eslint-plugin-tslint": "^5.59.11",
+    "@typescript-eslint/parser": "^5.59.11",
+    "eslint": "^8.42.0",
+    "eslint-config-prettier": "^8.8.0",
+    "eslint-config-standard": "^17.1.0",
+    "eslint-plugin-import": "^2.27.5",
+    "eslint-plugin-prettier": "^4.2.1",
+    "eslint-plugin-promise": "^6.1.1",
+    "eslint-plugin-unused-imports": "^2.0.0",
+    "lint-staged": "^13.2.2",
+    "prettier": "^2.8.8",
+    "typescript": "5.1.3",
+    "vitest": "^0.32.2"
+  },
+  "lint-staged": {
+    "**/*.{js,ts,jsx,tsx}": [
+      "eslint --cache --fix"
+    ],
+    "**/*.{js,ts,jsx,tsx,json,md}": [
+      "prettier --write"
+    ]
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/",
+    "tag": "latest"
+  }
+}
