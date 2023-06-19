@@ -26,7 +26,7 @@ jobs:
           cache: "yarn"
 
       - run: sudo add-apt-repository ppa:qpdf/qpdf
-      - run: sudo apt update
+
       - run: sudo apt-get install qpdf
 
       - name: Install dependencies

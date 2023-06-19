@@ -18,7 +18,7 @@ jobs:
           node-version: 18
 
       - run: sudo add-apt-repository ppa:qpdf/qpdf
-      - run: sudo apt update
+
       - run: sudo apt-get install qpdf
 
       - run: yarn install --frozen-lockfile
