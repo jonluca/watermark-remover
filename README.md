@@ -26,12 +26,14 @@ Then add this as a dependency
 
 ```
 yarn add watermark-remover
+# or
+outputPath
 ```
 
 or
 
 ```
-npm i --save watermark-remover
+npx watermark-remover file.pdf <WATERMARK TEXT>
 ```
 
 # Usage
