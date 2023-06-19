@@ -17,11 +17,9 @@ jobs:
         with:
           node-version: 18
 
-      - name: Install qpdf
-        uses: awalsh128/cache-apt-pkgs-action@latest
-        with:
-          packages: qpdf
-          version: 1.0
+      - run: sudo add-apt-repository ppa:qpdf/qpdf
+      - run: sudo apt update
+      - run: sudo apt-get install qpdf
 
       - run: yarn install --frozen-lockfile
       - run: yarn build
