@@ -16,7 +16,7 @@
   "sideEffects": false,
   "main": "dist/index.js",
   "bin": {
-    "watermark-remove": "bin/watermark-remover"
+    "watermark-remover": "bin/watermark-remover"
   },
   "keywords": [
     "watermark",
