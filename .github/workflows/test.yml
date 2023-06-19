@@ -12,10 +12,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Set core.autocrlf on windows
-        if: matrix.os == 'windows-latest'
-        run: git config --global core.autocrlf true
-
       - uses: actions/checkout@v3
 
       - name: Use Node.js ${{ matrix.node-version }}
