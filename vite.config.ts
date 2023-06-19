@@ -7,6 +7,10 @@ export default defineConfig({
     watch: false,
     passWithNoTests: true,
     reporters: ["verbose"],
+    coverage: {
+      reporter: ["json", "html", "lcov"],
+      provider: "v8",
+    },
     deps: {
       interopDefault: true,
       registerNodeLoader: true,
