@@ -30,7 +30,7 @@
     "build": "rm -fr dist/* && tsc -p tsconfig.json",
     "typecheck": "tsc --noEmit",
     "prettier": "prettier --write \"**/*.+(js|jsx|ts|tsx|har||json|css|md)\"",
-    "test": "vitest"
+    "test": "vitest --coverage"
   },
   "dependencies": {
     "@types/uuid": "^9.0.2",
