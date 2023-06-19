@@ -6,5 +6,10 @@ const filePath = process.argv[2];
 const watermark = process.argv[3];
 
 (async () => {
-  await removeWatermark(filePath, { watermark: watermark });
+  try {
+    const outputPath = await removeWatermark(filePath, { watermark: watermark });
+    console.log(`Output file: ${outputPath}`);
+  } catch (e) {
+    console.error(`Error: ${e.message}`);
+  }
 })();

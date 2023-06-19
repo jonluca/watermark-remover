@@ -260,6 +260,7 @@ export const removeWatermark = async (inputFile: string, opts?: RemoveWatermarkO
       outputPath = await removeWatermarkFromFileUncompressionTechnique(outputPath, watermark, tmpDir);
     }
     jetpack.copy(outputPath, output, { overwrite: true });
+    return output;
   } finally {
     tmpDir.remove();
   }
