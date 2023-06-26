@@ -23,7 +23,7 @@ describe("Removes watermark", async () => {
     await removeWatermark(resolve(join(__dirname, "pdfs/sample-text-watermark.pdf")), {
       watermark: "Watermark",
       outputFileName: "sample-text-intelligent-clean.pdf",
-      intelligentJson: true,
+      omitStreamsWithWatermark: true,
       modifyJsonObjects: false,
       binaryStringReplacement: false,
     });
