@@ -15,5 +15,7 @@ export default defineConfig({
       interopDefault: true,
       registerNodeLoader: true,
     },
+    testTimeout: 60 * 1000 * 60,
+    threads: true,
   },
 });

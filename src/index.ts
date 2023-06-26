@@ -6,12 +6,14 @@ import { lookpath } from "find-bin";
 import type { FSJetpack } from "fs-jetpack/types.js";
 import { bufferToHex, replaceBuffer } from "./utils.js";
 import type { QpdfConfig } from "./qpdf.js";
+import { join } from "path";
 
 interface Params {
   watermark: string;
   outputPath: string;
   dir: FSJetpack;
   casePermutations: boolean;
+  debugDir?: boolean;
 }
 
 const cleanWatermarkFromFile = async (filePath: string, watermark: string, casePermutations: boolean) => {
@@ -59,8 +61,14 @@ const cleanWatermarkFromFileHex = async (filePath: string, watermark: string) =>
   await jetpack.writeAsync(filePath, content);
 };
 
-const removeWatermarkFromFileJsonTechnique = async ({ outputPath, watermark, dir, casePermutations }: Params) => {
-  const name = uuid();
+const removeWatermarkFromFileJsonTechnique = async ({
+  outputPath,
+  debugDir,
+  watermark,
+  dir,
+  casePermutations,
+}: Params) => {
+  const name = debugDir ? "json" : uuid();
   const fullOutputPath = dir.path(name);
   const parseResult = await execa("qpdf", ["--json", "--json-stream-data=file", outputPath, fullOutputPath]);
   if (parseResult.exitCode !== 0) {
@@ -70,7 +78,8 @@ const removeWatermarkFromFileJsonTechnique = async ({ outputPath, watermark, dir
   await Promise.allSettled(fileList.map((f) => cleanWatermarkFromFile(dir.path(f), watermark, casePermutations)));
   // replace file name, keeping extension
   const parsedFilePath = path.parse(outputPath);
-  const outputFileName = uuid() + parsedFilePath.ext;
+  const outputName = debugDir ? "json-output" : uuid();
+  const outputFileName = outputName + parsedFilePath.ext;
   const tmpOutput = dir.path(outputFileName);
   const combineResult = await execa("qpdf", ["--json-input", fullOutputPath, tmpOutput]);
   if (combineResult.exitCode !== 0) {
@@ -114,13 +123,19 @@ const doesFileObjContainWatermark = async ({
 
   return null;
 };
-const removeWatermarkFromFileomitStreamsWithWatermarkTechnique = async ({ outputPath, watermark, dir }: Params) => {
-  const name = uuid();
+const removeWatermarkFromFileomitStreamsWithWatermarkTechnique = async ({
+  debugDir,
+  outputPath,
+  watermark,
+  dir,
+}: Params) => {
+  const name = debugDir ? "json-omission" : uuid();
   const fullOutputPath = dir.path(name);
   const parseResult = await execa("qpdf", [
     "--json",
     "--json-stream-data=file",
     "--decode-level=all",
+    "--stream-data=uncompress",
     outputPath,
     fullOutputPath,
   ]);
@@ -189,7 +204,8 @@ const removeWatermarkFromFileomitStreamsWithWatermarkTechnique = async ({ output
   await jetpack.writeAsync(fullOutputPath, path1);
   // replace file name, keeping extension
   const parsedFilePath = path.parse(outputPath);
-  const outputFileName = uuid() + parsedFilePath.ext;
+  const outputName = debugDir ? "json-omission-output" : uuid();
+  const outputFileName = outputName + parsedFilePath.ext;
   const tmpOutput = dir.path(outputFileName);
   const combineResult = await execa("qpdf", ["--json-input", fullOutputPath, tmpOutput]);
   if (combineResult.exitCode !== 0) {
@@ -197,14 +213,32 @@ const removeWatermarkFromFileomitStreamsWithWatermarkTechnique = async ({ output
   }
   return tmpOutput;
 };
+const preprocessFile = async ({ debugDir, outputPath, dir }: Params) => {
+  const name = debugDir ? "preprocessed-qdf.pdf" : uuid();
+  const fullOutputPath = dir.path(name);
+  const parseResult = await execa("qpdf", [
+    "--qdf",
+    "--recompress-flate",
+    "--decode-level=all",
+    "--stream-data=uncompress",
+    outputPath,
+    fullOutputPath,
+  ]);
+  if (parseResult.exitCode !== 0) {
+    throw new Error("Error executing qpdf");
+  }
+
+  return fullOutputPath;
+};
 
 const removeWatermarkFromFileUncompressionTechnique = async ({
   outputPath,
   casePermutations,
   watermark,
   dir,
+  debugDir,
 }: Params) => {
-  const name = uuid();
+  const name = debugDir ? "binary-removal.pdf" : uuid();
   const uncompressedOutputPath = dir.path(name);
   const uncompressResult = await execa("qpdf", [
     "--decode-level=all",
@@ -223,7 +257,7 @@ const removeWatermarkFromFileUncompressionTechnique = async ({
     await cleanWatermarkFromFileHex(uncompressedOutputPath, watermark.toLowerCase());
     await cleanWatermarkFromFileHex(uncompressedOutputPath, watermark.toUpperCase());
   }
-  const compressedOutput = dir.path(uuid());
+  const compressedOutput = dir.path(debugDir ? "binary-removal-output.pdf" : uuid());
   const compressResult = await execa("qpdf", [
     "--remove-unreferenced-resources=yes",
     "--linearize",
@@ -245,6 +279,7 @@ export interface RemoveWatermarkOptions {
   omitStreamsWithWatermark?: boolean;
   binaryStringReplacement?: boolean;
   casePermutations?: boolean;
+  debugDir?: boolean;
 }
 export const removeWatermark = async (inputFile: string, opts?: RemoveWatermarkOptions) => {
   const watermark = opts?.watermark || "CONFIDENTIAL";
@@ -253,6 +288,7 @@ export const removeWatermark = async (inputFile: string, opts?: RemoveWatermarkO
     casePermutations = true,
     omitStreamsWithWatermark = true,
     binaryStringReplacement = true,
+    debugDir,
   } = opts || {};
   // if file doesn't exist, return
   const resolved = path.resolve(inputFile);
@@ -265,43 +301,55 @@ export const removeWatermark = async (inputFile: string, opts?: RemoveWatermarkO
     throw new Error("qpdf binary not found, make sure it's installed on your system - https://github.com/qpdf/qpdf");
   }
 
-  const tmpDir = jetpack.tmpDir();
+  const debugPath = join(process.cwd(), "dbg");
+  if (debugDir) {
+    jetpack.dir(debugPath).remove();
+  }
+  const tmpDir = debugDir ? jetpack.dir(debugPath) : jetpack.tmpDir();
+
   try {
     const filename = path.basename(resolved);
     const fullPath = tmpDir.path(filename);
-    jetpack.copy(resolved, fullPath);
+    jetpack.copy(resolved, fullPath, { overwrite: true });
     const file = tmpDir.list()![0];
     if (!file) {
       throw new Error("Error copying file");
     }
     const parsedFilePath = path.parse(fullPath);
 
-    const outputFileName = opts?.outputFileName || `${parsedFilePath.name}-clean${parsedFilePath.ext}`;
+    const outputFileName =
+      opts?.outputFileName || (debugDir ? "output-final.pdf" : `${parsedFilePath.name}-clean${parsedFilePath.ext}`);
     const dirname = path.dirname(resolved);
-    const output = path.join(dirname, outputFileName);
-    let outputPath = fullPath;
+    const output = path.join(debugDir ? debugPath : dirname, outputFileName);
+
+    const outputPath = fullPath;
 
     const params = {
       watermark,
       outputPath,
       dir: tmpDir,
       casePermutations,
+      debugDir,
     } as Params;
 
+    params.outputPath = await preprocessFile(params);
+
     if (omitStreamsWithWatermark) {
-      outputPath = await removeWatermarkFromFileomitStreamsWithWatermarkTechnique(params);
+      params.outputPath = await removeWatermarkFromFileomitStreamsWithWatermarkTechnique(params);
     }
 
     if (modifyJsonObjects) {
-      outputPath = await removeWatermarkFromFileJsonTechnique(params);
+      params.outputPath = await removeWatermarkFromFileJsonTechnique(params);
     }
 
     if (binaryStringReplacement) {
-      outputPath = await removeWatermarkFromFileUncompressionTechnique(params);
+      params.outputPath = await removeWatermarkFromFileUncompressionTechnique(params);
     }
-    jetpack.copy(outputPath, output, { overwrite: true });
+    jetpack.copy(params.outputPath, output, { overwrite: true });
     return output;
   } finally {
-    tmpDir.remove();
+    if (!debugDir) {
+      tmpDir.remove();
+    }
   }
 };
