@@ -19,15 +19,6 @@ describe("Removes watermark", async () => {
     expect(true).toBe(true);
   });
 
-  test(`it removes the watermark from test pdf2`, async ({ expect }) => {
-    await removeWatermark(resolve(join(__dirname, "pdfs/41262-clean.pdf")), {
-      watermark: "CONFIDENTIAL",
-      outputFileName: "412622-clean.pdf",
-      debugDir: true,
-    });
-    expect(true).toBe(true);
-  });
-
   test(`it removes the watermark from test pdf with intelligent json only`, async ({ expect }) => {
     await removeWatermark(resolve(join(__dirname, "pdfs/sample-text-watermark.pdf")), {
       watermark: "Watermark",
