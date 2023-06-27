@@ -34,6 +34,12 @@ const args = yargs(hideBin(process.argv))
         "Attempt to check different case permutations of the watermark, e.g. 'CONFIDENTIAL' and 'confidential'",
       default: true,
     },
+    removeMetadata: {
+      type: "boolean",
+      alias: "m",
+      description: "Attempt to remove metadata - requires exiftool installed",
+      default: true,
+    },
   })
   .parseSync();
 
@@ -45,6 +51,7 @@ const {
   omitStreamsWithWatermark,
   binaryStringReplacement,
   modifyJsonObjects,
+  removeMetadata,
 } = args;
 
 (async () => {
@@ -56,6 +63,7 @@ const {
       binaryStringReplacement,
       omitStreamsWithWatermark,
       casePermutations,
+      removeMetadata,
     });
     console.log(`Output file: ${outputPath}`);
   } catch (e: any) {

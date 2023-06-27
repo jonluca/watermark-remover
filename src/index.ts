@@ -231,6 +231,22 @@ const preprocessFile = async ({ debugDir, outputPath, dir }: Params) => {
   return fullOutputPath;
 };
 
+const postprocessFile = async ({ debugDir, outputPath, dir }: Params) => {
+  const name = debugDir ? "postprocessed-qdf.pdf" : uuid();
+  const fullOutputPath = dir.path(name);
+  const exifResult = await execa("exiftool", ["-all:all=", "-overwrite_original", outputPath]);
+  if (exifResult.exitCode !== 0) {
+    throw new Error("Error executing exiftool");
+  }
+
+  const parseResult = await execa("qpdf", ["--linearize", outputPath, fullOutputPath]);
+  if (parseResult.exitCode !== 0) {
+    throw new Error("Error executing qpdf");
+  }
+
+  return fullOutputPath;
+};
+
 const removeWatermarkFromFileUncompressionTechnique = async ({
   outputPath,
   casePermutations,
@@ -279,6 +295,7 @@ export interface RemoveWatermarkOptions {
   omitStreamsWithWatermark?: boolean;
   binaryStringReplacement?: boolean;
   casePermutations?: boolean;
+  removeMetadata?: boolean;
   debugDir?: boolean;
 }
 export const removeWatermark = async (inputFile: string, opts?: RemoveWatermarkOptions) => {
@@ -288,6 +305,7 @@ export const removeWatermark = async (inputFile: string, opts?: RemoveWatermarkO
     casePermutations = true,
     omitStreamsWithWatermark = true,
     binaryStringReplacement = true,
+    removeMetadata = true,
     debugDir,
   } = opts || {};
   // if file doesn't exist, return
@@ -345,6 +363,16 @@ export const removeWatermark = async (inputFile: string, opts?: RemoveWatermarkO
     if (binaryStringReplacement) {
       params.outputPath = await removeWatermarkFromFileUncompressionTechnique(params);
     }
+
+    if (removeMetadata) {
+      const exifBin = await lookpath("exiftool");
+      if (!exifBin) {
+        console.error("exiftool binary not found, make sure it's installed on your system - brew install exiftool");
+      } else {
+        params.outputPath = await postprocessFile(params);
+      }
+    }
+
     jetpack.copy(params.outputPath, output, { overwrite: true });
     return output;
   } finally {
