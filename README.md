@@ -10,30 +10,28 @@ This only works for text based watermarks that have been added to the pdf as tex
 
 # Getting Started
 
-You must have qpdf >v11 installed. You can install it with brew on macos:
+You must have qpdf >v11 and exiftool (to remove metadata) installed. You can install it with brew on macos:
 
 ```
-brew install qpdf
+brew install qpdf exiftool
 ```
 
 or with apt
 
 ```bash
-sudo apt-get install qpdf
+sudo apt-get install qpdf exiftool
 ```
 
 Then add this as a dependency
 
 ```
 yarn add watermark-remover
-# or
-outputPath
 ```
 
-or
+or you can just run the binary with
 
 ```
-npx watermark-remover file.pdf <WATERMARK TEXT>
+npx watermark-remover -f file.pdf -w <WATERMARK TEXT>
 ```
 
 # Usage

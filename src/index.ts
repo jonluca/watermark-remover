@@ -239,7 +239,16 @@ const postprocessFile = async ({ debugDir, outputPath, dir }: Params) => {
     throw new Error("Error executing exiftool");
   }
 
-  const parseResult = await execa("qpdf", ["--linearize", outputPath, fullOutputPath]);
+  const parseResult = await execa("qpdf", [
+    "--linearize",
+    "--object-streams=generate",
+    "--recompress-flate",
+    "--stream-data=compress",
+    "--compression-level=9",
+    "--optimize-images",
+    outputPath,
+    fullOutputPath,
+  ]);
   if (parseResult.exitCode !== 0) {
     throw new Error("Error executing qpdf");
   }
