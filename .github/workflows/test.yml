@@ -22,8 +22,7 @@ jobs:
 
       - run: sudo add-apt-repository ppa:qpdf/qpdf
 
-      - run: sudo apt-get install qpdf
-      - run: sudo apt-get install exiftool
+      - run: sudo apt-get install qpdf exiftool poppler-utils
 
       - name: Install dependencies
         run: yarn install --frozen-lockfile
