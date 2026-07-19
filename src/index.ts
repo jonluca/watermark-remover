@@ -21,14 +21,14 @@ const cleanWatermarkFromFile = async (filePath: string, watermark: string, caseP
   if (!content) {
     throw new Error("Error reading file");
   }
-  if (!content.includes(watermark)) {
+  const normalizedWatermark = casePermutations ? watermark.toLowerCase() : watermark;
+  const containsWatermark = (value: string) =>
+    (casePermutations ? value.toLowerCase() : value).includes(normalizedWatermark);
+  if (!containsWatermark(content)) {
     return;
   }
-  const regex = new RegExp(watermark, "gi");
   const lines = content.split("\n");
-  const newLines = casePermutations
-    ? lines.filter((line) => !line.includes(watermark))
-    : lines.filter((line) => !line.match(regex));
+  const newLines = lines.filter((line) => !containsWatermark(line));
   const newContent = newLines.join("\n");
   await jetpack.writeAsync(filePath, newContent);
 };
@@ -61,6 +61,21 @@ const cleanWatermarkFromFileHex = async (filePath: string, watermark: string) =>
   await jetpack.writeAsync(filePath, content);
 };
 
+const getCaseInsensitiveHexPattern = (value: string, offset: number, padded: boolean) =>
+  Array.from(value)
+    .map((character) => {
+      const encodings = new Set(
+        [character.toLowerCase(), character.toUpperCase()].map((variant) =>
+          [...Buffer.from(variant, "utf8")]
+            .map((byte) => ((byte - offset + 256) % 256).toString(16).padStart(padded ? 4 : 2, "0"))
+            .join(""),
+        ),
+      );
+      const alternatives = [...encodings];
+      return alternatives.length === 1 ? alternatives[0] : `(?:${alternatives.join("|")})`;
+    })
+    .join("");
+
 const removeWatermarkFromFileJsonTechnique = async ({
   outputPath,
   debugDir,
@@ -91,18 +106,34 @@ const removeWatermarkFromFileJsonTechnique = async ({
 const doesFileObjContainWatermark = async ({
   filePath,
   watermark,
+  casePermutations,
 }: {
   filePath: string;
   watermark: string;
+  casePermutations: boolean;
 }): Promise<string | null> => {
   const content = await jetpack.readAsync(filePath, "utf8");
   if (!content) {
     throw new Error("Error reading file");
   }
-  const regex = new RegExp(watermark, "gi");
-  if (content.match(regex)) {
+  const containsTextWatermark = casePermutations
+    ? content.toLowerCase().includes(watermark.toLowerCase())
+    : content.includes(watermark);
+  if (containsTextWatermark) {
     return filePath;
   }
+
+  if (casePermutations) {
+    for (let offset = 1; offset <= 100; offset++) {
+      const compactPattern = getCaseInsensitiveHexPattern(watermark, offset, false);
+      const paddedPattern = getCaseInsensitiveHexPattern(watermark, offset, true);
+      if (new RegExp(compactPattern, "i").test(content) || new RegExp(paddedPattern, "i").test(content)) {
+        return filePath;
+      }
+    }
+    return null;
+  }
+
   const watermarkBuf = Buffer.from(watermark, "utf8");
   // now try and replace hex version of watermark - the mapping will sometimes be offset by entries in font space
   for (let i = 0; i < 100; i++) {
@@ -115,8 +146,8 @@ const doesFileObjContainWatermark = async ({
       return filePath;
     }
     const paddedHex = bufferToHex(watermarkBuf);
-    const paddexHexRegex = new RegExp(paddedHex, "gi");
-    if (content.match(paddexHexRegex)) {
+    const paddedHexRegex = new RegExp(paddedHex, "gi");
+    if (content.match(paddedHexRegex)) {
       return filePath;
     }
   }
@@ -128,6 +159,7 @@ const removeWatermarkFromFileomitStreamsWithWatermarkTechnique = async ({
   outputPath,
   watermark,
   dir,
+  casePermutations,
 }: Params) => {
   const name = debugDir ? "json-omission" : uuid();
   const fullOutputPath = dir.path(name);
@@ -146,7 +178,11 @@ const removeWatermarkFromFileomitStreamsWithWatermarkTechnique = async ({
   const fileList = dir.list()?.filter((f) => f.startsWith(prefix)) || [];
   const filesWithWatermarkResults = await Promise.allSettled(
     fileList.map(async (f) => {
-      const maybeFile = await doesFileObjContainWatermark({ filePath: dir.path(f), watermark });
+      const maybeFile = await doesFileObjContainWatermark({
+        filePath: dir.path(f),
+        watermark,
+        casePermutations,
+      });
       if (maybeFile) {
         return f;
       }
@@ -245,7 +281,6 @@ const postprocessFile = async ({ debugDir, outputPath, dir }: Params) => {
     "--recompress-flate",
     "--stream-data=compress",
     "--compression-level=9",
-    "--optimize-images",
     outputPath,
     fullOutputPath,
   ]);
@@ -299,6 +334,7 @@ const removeWatermarkFromFileUncompressionTechnique = async ({
 
 export interface RemoveWatermarkOptions {
   watermark?: string;
+  outputFile?: string;
   outputFileName?: string;
   modifyJsonObjects?: boolean;
   omitStreamsWithWatermark?: boolean;
@@ -345,7 +381,9 @@ export const removeWatermark = async (inputFile: string, opts?: RemoveWatermarkO
     const parsedFilePath = path.parse(fullPath);
 
     const outputFileName =
-      opts?.outputFileName || (debugDir ? "output-final.pdf" : `${parsedFilePath.name}-clean${parsedFilePath.ext}`);
+      opts?.outputFile ||
+      opts?.outputFileName ||
+      (debugDir ? "output-final.pdf" : `${parsedFilePath.name}-clean${parsedFilePath.ext}`);
     const dirname = path.dirname(resolved);
     const output = path.join(debugDir ? debugPath : dirname, outputFileName);
 
